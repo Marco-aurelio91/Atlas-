@@ -19,8 +19,8 @@ android {
 
     defaultConfig {
         applicationId = "com.unyx.atlas"
-        versionCode = 59
-        versionName = "0.7.44"
+        versionCode = 60
+        versionName = "0.7.45"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
