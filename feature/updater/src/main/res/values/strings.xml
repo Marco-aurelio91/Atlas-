@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_section">Atualizações</string>
+    <string name="update_current_version">Versão %1$s</string>
+    <string name="update_check_now">Verificar atualizações</string>
+    <string name="update_checking">Verificando…</string>
+    <string name="update_auto_toggle">Verificar atualizações automaticamente</string>
+    <string name="update_last_check">Última verificação: %1$s</string>
+    <string name="update_up_to_date">Você está na versão mais recente</string>
+    <string name="update_available_title">Nova versão %1$s disponível</string>
+    <string name="update_whats_new">Novidades</string>
+    <string name="update_install">Atualizar</string>
+    <string name="update_downloading">Baixando…</string>
+    <string name="update_downloading_percent">%1$d %%</string>
+    <string name="update_check_failed">Não foi possível verificar atualizações</string>
+    <string name="update_install_failed">Não foi possível baixar a atualização</string>
+    <string name="update_never_checked">Ainda não verificado</string>
+    <string name="update_notification_channel_name">Atualizações</string>
+</resources>
