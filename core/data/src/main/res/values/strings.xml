@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setting_wifi">Wi-Fi</string>
+    <string name="setting_wifi_aliases">wifi,wlan,sem fio,internet,rede</string>
+    <string name="setting_bluetooth">Bluetooth</string>
+    <string name="setting_bluetooth_aliases">bluetooth,bt,fone de ouvido</string>
+    <string name="setting_network">Rede e internet</string>
+    <string name="setting_network_aliases">rede,internet,dados móveis,dados,sim</string>
+    <string name="setting_data">Uso de dados</string>
+    <string name="setting_data_aliases">dados,uso de dados,dados móveis</string>
+    <string name="setting_battery">Bateria</string>
+    <string name="setting_battery_aliases">bateria,energia,economia,carregamento</string>
+    <string name="setting_display">Tela</string>
+    <string name="setting_display_aliases">tela,brilho,escuro,tema,papel de parede</string>
+    <string name="setting_sound">Som</string>
+    <string name="setting_sound_aliases">som,volume,vibração,toque</string>
+    <string name="setting_apps">Apps</string>
+    <string name="setting_apps_aliases">apps,aplicativos</string>
+    <string name="setting_storage">Armazenamento</string>
+    <string name="setting_storage_aliases">armazenamento,memória,disco</string>
+    <string name="setting_location">Localização</string>
+    <string name="setting_location_aliases">localização,gps</string>
+    <string name="setting_datetime">Data e hora</string>
+    <string name="setting_datetime_aliases">data,hora,relógio,fuso horário</string>
+    <string name="setting_security">Segurança</string>
+    <string name="setting_security_aliases">segurança,bloqueio,senha,digital</string>
+    <string name="setting_accessibility">Acessibilidade</string>
+    <string name="setting_accessibility_aliases">acessibilidade,a11y</string>
+    <string name="setting_language">Idiomas e teclado</string>
+    <string name="setting_language_aliases">idioma,idiomas,teclado</string>
+    <string name="setting_about">Sobre o telefone</string>
+    <string name="setting_about_aliases">sobre,versão,modelo,android</string>
+    <string name="setting_systemupdate">Atualizações de software</string>
+    <string name="setting_systemupdate_aliases">atualização de software,atualização do sistema,atualização,atualizações</string>
+</resources>
