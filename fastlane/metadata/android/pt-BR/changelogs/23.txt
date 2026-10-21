@@ -1,0 +1,4 @@
+Correções de estabilidade.
+
+- Corrigido um travamento ao soltar um app em uma pasta depois que um app que estava dentro da pasta havia sido desinstalado; pastas que ficam com um único item agora se desfazem corretamente.
+- Ativar as atualizações automáticas agora mostra o diálogo de permissão de notificação apenas uma vez.

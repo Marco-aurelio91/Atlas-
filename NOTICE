@@ -1,0 +1,16 @@
+Atlas
+Copyright 2026 colaboradores do Atlas
+
+Este produto é licenciado sob a Apache License, Version 2.0 (veja LICENSE).
+
+------------------------------------------------------------------------------
+Créditos de terceiros
+------------------------------------------------------------------------------
+
+Os dados de clima usados pela ferramenta de clima do assistente são
+fornecidos pela Open-Meteo (https://open-meteo.com/), licenciados sob
+CC BY 4.0.
+
+Quando o dispositivo não tem um serviço local de geocodificação, o nome do
+local mostrado ao lado do clima usa a API gratuita de geocodificação reversa
+do lado do cliente da BigDataCloud (https://www.bigdatacloud.com/).

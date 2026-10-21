@@ -1,0 +1,3 @@
+Correção do indicador de bateria.
+
+- O widget de bateria e a leitura de bateria da barra de status agora aparecem imediatamente em todos os dispositivos. Em alguns aparelhos mais antigos (ex.: Samsung Galaxy A40), a primeira leitura podia demorar até um minuto para chegar depois de abrir o launcher ou adicionar o widget.

@@ -1,0 +1,4 @@
+Densidade da grade da tela inicial e posicionamento de widgets.
+
+- Nova configuração "Linhas" (Configurações > Tela inicial, 5-8): mais linhas deixam a grade de ícones mais apertada e liberam linhas inteiras para widgets; menos linhas dão um layout mais espaçoso. Diminuir reorganiza os itens com segurança, e os backups levam a quantidade de linhas.
+- Adicionar um widget agora empurra os ícones para o lado nas páginas atuais em vez de posicionar o widget silenciosamente em uma nova página — um relógio em largura total não "recusa mais a instalação" em uma página com ícones espalhados.

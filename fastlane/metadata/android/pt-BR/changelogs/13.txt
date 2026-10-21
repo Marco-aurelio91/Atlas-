@@ -1,0 +1,3 @@
+- O launcher agora lembra a página da tela inicial: voltar de um app te leva de volta à página de onde ele foi aberto. Pressionar home já estando na tela inicial ainda pula para a primeira página.
+- As configurações mantêm a posição de rolagem ao voltar das telas de Ocultar apps ou Backup.
+- A configuração "Conceder acesso a notificações" agora mostra se o acesso foi concedido, atualizando assim que você volta da tela do sistema.

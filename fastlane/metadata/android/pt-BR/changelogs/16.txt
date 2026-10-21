@@ -1,0 +1,2 @@
+Novo widget de Notificações: suas notificações ativas como ícones de apps coloridos na tela inicial — um ícone por app, mais recentes primeiro, toque para abrir a notificação. Escolha o estilo de contagem (número, bolinha ou nenhum) em Configurações.
+Nova seção de Permissões em Configurações: veja rapidamente quais permissões estão concedidas e conceda as que faltam com um toque.

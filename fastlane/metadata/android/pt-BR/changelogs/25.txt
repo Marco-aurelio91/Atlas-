@@ -1,0 +1,3 @@
+Grupo de comunidade.
+
+- A seção de Feedback nas Configurações agora também linka para o grupo de comunidade do projeto — um lugar para conversar com outros usuários, tirar dúvidas e acompanhar novos lançamentos.

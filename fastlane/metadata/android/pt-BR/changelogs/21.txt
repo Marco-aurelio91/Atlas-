@@ -1,0 +1,4 @@
+Novo widget de bateria e cores de indicadores mais vivas.
+
+- Novo widget de Bateria embutido: um anel do tamanho de um ícone de app com a porcentagem e um raio de carregamento, em uma cor dinâmica vermelho-amarelo-verde. Ele segue exatamente a bateria do sistema (mesma fonte da barra de status, sem atraso), pode ser redimensionado, e um toque abre as configurações de bateria.
+- Cores de indicadores mais vivas em todo o launcher: as escalas de bateria e sinal agora são vivas em ambos os temas (o tema escuro usava tons pastéis apagados), e os ícones da barra de status (Bluetooth, localização, VPN e afins) ganharam um azul vivo.

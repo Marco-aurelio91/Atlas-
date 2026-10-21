@@ -1,0 +1,6 @@
+- Widgets agora são incluídos no backup e na restauração (restaurados como placeholders de "toque para configurar").
+- Suporte a pacotes de ícones de terceiros (Configurações > Ícones > Pacote de ícones).
+- Pressionar HOME fecha os popups abertos.
+- Soltar um ícone sobre um widget faz ele voltar ao lugar, em vez de ficar escondido por baixo.
+- A lista de restauração do Drive mostra a data de cada backup e marca o mais recente.
+- Diversas correções e melhorias.

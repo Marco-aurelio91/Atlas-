@@ -1,0 +1,4 @@
+Novo widget de relógio e calendário: hora, data, próximo alarme, próximo evento do calendário e clima atual — redimensionável, adicionado automaticamente em novas instalações.
+Nova introdução de primeira execução: definir como padrão, aprender os gestos e conceder permissões em um só lugar; novas instalações começam com uma dock já pronta.
+O app agora se chama Atlas.
+Correções: notificações em destaque não sobrepõem mais a barra de status com tema; widgets restaurados pelo backup do dispositivo do Google aparecem como placeholders de "toque para configurar".

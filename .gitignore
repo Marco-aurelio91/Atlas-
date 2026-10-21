@@ -1,0 +1,64 @@
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+**/build/
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.aab
+local.properties
+.kotlin/
+# Material de assinatura de release — nunca commitar
+*.jks
+*.keystore
+keystore.properties
+# Credenciais Supabase — nunca commitar (a publishable/anon key até poderia ir no client, mas o
+# token de deploy/management API não pode de jeito nenhum)
+supabase.properties
+# Chave da API Anthropic/Claude — nunca commitar
+claude.properties
+# Chave da API Groq (transcrição de voz) — nunca commitar
+groq.properties
+# Chave da API OpenAI (embeddings/busca híbrida da memória) — nunca commitar
+openai.properties
+# Chave da API Gemini (embeddings da memória — provedor atual, ver EmbeddingClient) — nunca commitar
+gemini.properties
+# Credenciais OAuth — nunca commitar (segredos não são usados no app de qualquer forma)
+client_secret*.json
+*.apps.googleusercontent.com.json
+# Exportação de origem dos ícones (assets já copiados para app/src/main/res)
+/launcher_L/
+# Artefatos de referência de design mantidos localmente (não fazem parte do app)
+/design-full.png
+/statuspalkki.png
+/Launcher etusivu*.html
+# Capturas de tela avulsas de dispositivo usadas para feedback (somente local)
+Screenshot_*.png
+
+# Referência do AOSP Launcher3 (somente local, não commitar)
+Launcher3-*.tar.gz
+launcher3_src/
+CellLayout.java
+/celllayout/
+
+# Referência do Lawnchair (GPL — somente local, NÃO commitar/redistribuir)
+lawnchair-*.zip
+lawnchair-src/
+
+# Cópias de referência de design (somente local — extraídas/aplicadas, binários não commitados)
+Android launcherin teeman asetukset.zip
+
+# Mapeamentos R8 arquivados por build (para decifrar crashes de builds anteriores) — grandes,
+# só locais, nunca commitar
+/mapping-archive/
+
+# Flutter/Dart (sdk/flutter) — cache e snapshots locais, regenerados pelo `dart pub get`
+.dart_tool/
+.packages
+
+# Capturas de tela avulsas na raiz usadas só para depurar a UI — somente locais
+/*.png

@@ -1,0 +1,5 @@
+- O sinal do celular mostra o tipo de rede (5G / 4G / LTE) corretamente mesmo em chamada por Wi-Fi, e some completamente quando não há serviço celular.
+- Gaveta de apps: nova opção "Sempre abrir no topo"; corrigido o fechamento inesperado da gaveta ao arremessar a lista até o topo, e um pequeno atraso ao puxá-la para baixo para fechar.
+- Os nomes dos apps não sobrepõem mais os vizinhos em tamanhos de fonte do sistema muito grandes.
+- O backup automático do Google Drive não envia mais cópias redundantes de um layout inalterado (mantém alguns pontos de restauração datados).
+- A barra de status não sobrepõe mais brevemente a barra do próprio sistema quando chega uma notificação.

@@ -1,0 +1,2 @@
+- Corrigido: com a barra de status do sistema oculta, a tela inicial não pula mais para cima e para baixo quando uma notificação em destaque aparece.
+- Corrigido: "Sempre abrir no topo" agora também reseta uma pequena rolagem na gaveta de apps.

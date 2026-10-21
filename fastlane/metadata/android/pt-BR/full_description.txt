@@ -1,0 +1,16 @@
+Atlas é um launcher de tela inicial para Android moderno e leve, construído inteiramente com Jetpack Compose e Material 3. Funciona como um launcher independente para qualquer pessoa.
+
+Recursos:
+
+* Tela inicial paginada com posicionamento livre dos ícones e arrastar-e-soltar fluido — mova ícones dentro de uma página, entre páginas, e entre a grade da tela inicial e a dock.
+* Dock de apps favoritos.
+* Gaveta de apps com busca universal: apps, páginas de configurações do sistema, contatos (opcional), e uma calculadora / conversor de unidades, além de uma linha opcional de apps mais usados.
+* Widgets na tela inicial — adicionar, redimensionar, mover, reconfigurar e esticar um widget para largura total. Widgets de coleção (listas de conversas, calendários) rolam no próprio lugar.
+* Pastas na tela inicial e dentro da gaveta de apps.
+* Pacotes de ícones de terceiros (formato appfilter ADW/Nova) e ícones com tema Material You.
+* Gestos configuráveis: deslizar para cima para a gaveta de apps, deslizar para baixo para notificações, e um deslize configurável na borda esquerda.
+* Bolinhas/badges de notificação, e uma barra de status opcional com tema.
+* Backup e restauração do seu layout para um arquivo, além de backup automático opcional no Google Drive. Widgets são incluídos nos backups.
+* Bloquear área de trabalho, ocultar apps, renomear apps com rótulos personalizados, e uma tela de configurações autocontida.
+
+Gratuito e de código aberto sob a licença Apache-2.0.

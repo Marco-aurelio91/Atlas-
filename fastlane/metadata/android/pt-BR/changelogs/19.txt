@@ -1,0 +1,5 @@
+Melhoria no layout do widget de relógio.
+
+- Quando um evento do calendário (ou a solicitação de permissão dele) está visível, o clima, a data e o próximo alarme agora dividem uma linha, então o widget ocupa no máximo três linhas e a linha do calendário ganha mais espaço.
+- Sem uma linha de calendário, o layout mais espaçado continua igual (clima, data e alarme em linhas próprias).
+- O widget compacto continua legível quando redimensionado para uma linha da grade, então o relógio e o widget de notificações cabem na mesma página com três linhas de ícones.

@@ -1,0 +1,9 @@
+Correções de confiabilidade a partir de uma revisão completa do app.
+
+- Os ícones dos apps agora atualizam imediatamente quando um app é atualizado — até os que já estão visíveis na dock, na tela inicial e na gaveta de apps.
+- A varredura da lista de apps não roda mais de 3 a 4 vezes por evento de pacote, e digitar na busca não escaneia mais os apps instalados a cada tecla.
+- Restaurar um backup não pode mais deixar uma pasta vazia travada e impossível de remover na tela inicial.
+- Um backup do Google Drive bem-sucedido não é mais reportado como falho (e reenviado como duplicata) quando apenas a limpeza de backups antigos falha.
+- Redimensionar um widget agora redimensiona o conteúdo do widget em tempo real enquanto você arrasta, e um redimensionamento rejeitado faz a moldura voltar ao lugar em vez de dessincronizar.
+- As pré-visualizações de pastas não distorcem mais em tamanhos de ícone pequenos (6-7 colunas), pastas da gaveta mostram badges de notificação, e uma busca vazia diz "Nenhum resultado encontrado".
+- O indicador de 4G/5G aparece logo após conceder a permissão de telefone nas Configurações, e um raro risco de loop de travamento na inicialização foi removido.

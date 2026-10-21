@@ -1,0 +1,3 @@
+Novo canal de feedback.
+
+- Nova seção de Feedback na parte inferior das Configurações: um toque abre um canal de comunidade do projeto — o lugar para perguntas, ideias de recursos e feedback em geral.

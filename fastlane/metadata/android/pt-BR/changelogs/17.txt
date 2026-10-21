@@ -1,0 +1,6 @@
+Correções de confiabilidade e compatibilidade em todo o launcher.
+Backup e restauração: widgets restaurados não sobrepõem mais outros itens, entradas fora da grade e corrompidas são rejeitadas, importações têm limite de tamanho e rodam fora da thread principal, e uma configuração com tipo errado não consegue mais quebrar a tela inicial.
+Widget de Notificações: um widget estreito sempre mantém uma notificação tocável, todo ícone faz algo previsível ao ser tocado, e notificações com estilo personalizado agora aparecem.
+Clima: o nome da cidade é resolvido em mais dispositivos, usa a localização mais recente, e mantém o último nome conhecido durante uma falha temporária de busca.
+Atualizador: escolhe o arquivo de release correto, só marca uma versão como notificada depois que a notificação realmente aparece, e verifica o download antes de instalar.
+Também: a calculadora lida com conversões negativas e a vírgula decimal, o relógio da barra de status segue a configuração do sistema de 12/24 horas, e o estado do Wi-Fi é mais preciso.

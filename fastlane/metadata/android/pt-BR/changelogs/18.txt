@@ -1,0 +1,21 @@
+Versão de confiabilidade e correções de bugs.
+
+Tela inicial
+- Desinstalar um app agora libera as células da tela inicial: linhas invisíveis obsoletas não bloqueiam mais o posicionamento, a movimentação ou o redimensionamento de itens.
+- O widget de notificações é adicionado em largura total, para que seus ícones fiquem centralizados em qualquer número de colunas.
+- Os gestos de arraste sempre são liberados corretamente, movimentos entre superfícies não podem mais ser interrompidos no meio do caminho, e a configuração de primeira execução resiste a uma interrupção no início.
+
+Clima
+- O nome do local agora recorre a uma busca pela rede quando o dispositivo não tem um geocodificador funcional (corrige a cidade ausente em alguns aparelhos Samsung), e o nome em cache expira depois de um dia.
+
+Widget de Notificações
+- Tocar em um ícone cujo app não pode ser aberto agora abre as configurações de notificação dele, como esperado.
+
+Backup
+- As caixas de diálogo sobrevivem à rotação de tela, o backup no Drive pede autorização antes de ser ativado, e itens na última página da tela inicial são restaurados corretamente.
+
+Atualizador
+- O checksum, o tamanho e a versão do APK baixado são verificados antes da instalação, e a permissão de notificação só é solicitada enquanto a atualização automática está ativada.
+
+Outros
+- As atualizações do calendário são mais robustas, os resultados de busca são atualizados em tempo real quando os apps mudam, e o indicador de sinal aparece logo após conceder a permissão de telefone na configuração inicial.
