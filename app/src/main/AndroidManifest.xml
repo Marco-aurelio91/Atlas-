@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Every network call the app makes — Supabase, Claude, Athena, Open-Meteo — needs this. Used
+         to come only from feature:backup's own manifest (Drive uploads); when that module was
+         removed with the rest of the launcher shell, this permission silently disappeared with it. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Also used (alongside WRITE_CALENDAR) by Atlas's create_reminder chat tool. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <!-- Dangerous permission (runtime prompt required): lets Atlas's create_reminder tool insert a
+         real CalendarContract.Events row. Not granted by default — the tool checks
+         checkSelfPermission() first and reports an honest failure rather than crashing. -->
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
+    <!-- Atlas's get_weather chat tool (Open-Meteo needs rough coordinates); requested at runtime.
+         A cached fix is read — no active location requests. FINE is requested alongside COARSE
+         (both must be declared for the system's Precise/Approximate dialog to offer Precise at
+         all) purely for a tighter weather/city fix; WeatherRepository.lastKnownLocation() already
+         reads whatever provider has the newest cached fix regardless of which was granted. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Geofences can trigger while the Atlas UI is closed; the user grants this separately from
+         the location dialog in Android settings. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- DeviceContextCapture's ConnectivityManager check (see its own doc) — without this the
+         connectivity callbacks throw. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Atlas's open_app chat tool resolves apps by name across everything installed, not just
+         ones it already has a static <queries> declaration for. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Normal permission (no runtime prompt): lets Atlas's set_alarm tool pass EXTRA_SKIP_UI so the
+         Clock app creates the alarm directly instead of opening its own confirmation screen. Without
+         it the alarm still gets created, just via the Clock app's own UI. -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
+    <!-- Special-access permission (not a runtime dialog): the user must grant this from its own
+         system settings screen (Settings.ACTION_MANAGE_WRITE_SETTINGS). Lets set_brightness write
+         Settings.System.SCREEN_BRIGHTNESS; Settings.System.canWrite() is checked before every use,
+         so the tool degrades to an honest failure message rather than crashing when not granted. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!-- Dangerous permission (runtime prompt required): lets the chat's voice input use
+         android.speech.SpeechRecognizer. Requested lazily the first time the user taps the mic, not
+         at app start — matches WRITE_CALENDAR/ACCESS_COARSE_LOCATION's pattern of asking only when
+         the feature is actually used. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Dangerous permission on API 33+ (runtime prompt required): both the "update available"
+         notification (UpdateNotifier) and Atlas's own automation notifications (AutomationExecutor)
+         check this before posting and degrade silently (no crash) when it's missing — but they need
+         the manifest declaration to ever be grantable at all. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
+    <!-- Dangerous permission (runtime prompt required): Atlas Connect's QR-scanning pairing
+         screen (CameraX preview + ML Kit barcode decode). Requested lazily when the user taps
+         "Ler QR", not at app start — same pattern as RECORD_AUDIO above. A denial falls back to
+         "apresentar meu QR" instead of blocking the whole screen, per
+         docs/ATLAS_CHAT_Plano_Arquitetura_Layouts_e_Telas.md §11. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- Atlas Connect's NFC pairing (tap-to-pair alternative to the QR flow) — no runtime prompt,
+         NFC is a normal permission. android:required="false" on both features so a device
+         without NFC/HCE hardware still installs fine; the UI itself only offers NFC when
+         PackageManager reports FEATURE_NFC_HOST_CARD_EMULATION. -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc.hce" android:required="false" />
+
+    <application
+        android:name=".LauncherApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AtlasLauncher.Starting">
+
+        <service
+            android:name="com.unyx.atlas.feature.chat.AtlasOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-enabled floating Atlas assistant overlay" />
+        </service>
+        <service
+            android:name="com.unyx.atlas.feature.chat.capture.AtlasScreenCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <!-- Atlas Connect's NFC pairing — see NfcCardTransfer's own doc. exported="true" and
+             BIND_NFC_SERVICE are both required by the platform for any HostApduService to be
+             reachable by the NFC stack at all, not an intentional broadening of this app's own
+             exported surface. -->
+        <service
+            android:name="com.unyx.atlas.feature.connect.nfc.NfcCardService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice" />
+        </service>
+
+        <receiver
+            android:name="com.unyx.atlas.feature.chat.automation.AutomationPowerReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+                <action android:name="android.intent.action.BATTERY_LOW" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.unyx.atlas.feature.chat.automation.AutomationGeofenceReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".AutomationBootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings_label"
+            android:theme="@style/Theme.AtlasLauncher" />
+
+        <!-- Atlas chat. Exported for two reasons: the atlas://auth-callback deep link Supabase
+             redirects to after email confirmation, and (see the MAIN/LAUNCHER filter below) its own
+             app-drawer icon so it can be pinned to the dock like any other app, instead of only
+             being reachable via Configurações → Atlas. The assist gesture no longer lands here —
+             see AssistantActivity below. -->
+        <activity
+            android:name=".AtlasChatActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.chat"
+            android:label="@string/atlas_chat_launcher_label"
+            android:theme="@style/Theme.AtlasLauncher"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="atlas" android:host="auth-callback" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Quick Assistant popup — this is what the OS assist gesture (long-press Home, the
+             OEM's assistant button, etc.) opens once Atlas is set as the default digital
+             assistant (Configurações → Assistente padrão do telefone). Not exported for LAUNCHER —
+             no app-drawer icon of its own; reached only via the assist gesture or from inside the
+             app. Floating/translucent theme (see themes.xml) so it reads as a quick popup over
+             whatever app was in front, not a full takeover. -->
+        <activity
+            android:name=".AssistantActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.assistant"
+            android:theme="@style/Theme.AtlasLauncher.Assistant"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <action android:name="android.intent.action.VOICE_ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- Makes Atlas a target in the system share sheet ("Compartilhar" from any other app)
+                 — see AssistantActivity's own doc for why a share lands on this screen, not the
+                 full chat. Two filters (not one with two <data> tags) is the standard pattern for
+                 accepting more than one MIME type on the same action. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
+
+        <!-- Notes. Exported so its own app-drawer icon can be pinned to the dock like Atlas Chat,
+             instead of only being reachable via the Chat header's "⋮ → Notas" menu item.
+             singleTask alone (matching AtlasChatActivity) wasn't enough — without an explicit
+             taskAffinity too, Notes and Chat still shared the app's default task affinity, so
+             launching one while the other's task was already resident just brought that existing
+             task forward instead of actually switching activities. Confirmed live both ways:
+             repeated `am start -n .../.NotesActivity` calls sometimes left AtlasChatActivity as the
+             resumed activity, and the app-drawer icons for both ended up opening whichever of the
+             two was already on top. Each now gets its own taskAffinity, matching LauncherActivity's
+             already-separate one, so their back stacks never merge. -->
+        <activity
+            android:name=".NotesActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.notes"
+            android:label="@string/atlas_notes_launcher_label"
+            android:theme="@style/Theme.AtlasLauncher"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Atlas Connect — chat humano-a-humano E2EE, deliberately a separate Activity/taskAffinity
+             from AtlasChatActivity (the AI assistant) and NotesActivity, same reasoning as Notes'
+             own comment above: no shared back stack, own app-drawer icon. -->
+        <activity
+            android:name=".AtlasConnectActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.connect"
+            android:label="@string/atlas_connect_launcher_label"
+            android:theme="@style/Theme.AtlasLauncher"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Disable the default WorkManager startup initializer so we can supply our own
+             Configuration.Provider (with HiltWorkerFactory) from LauncherApplication.
+             See: https://developer.android.com/topic/libraries/architecture/workmanager/advanced/custom-configuration -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+    </application>
+
+</manifest>

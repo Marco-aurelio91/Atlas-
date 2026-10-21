@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Atlas</string>
+    <string name="set_default_launcher">Definir como launcher padrão</string>
+    <string name="default_launcher_active">Launcher padrão ativo</string>
+    <string name="settings_label">Configurações do Atlas</string>
+    <!-- App drawer label for AtlasChatActivity's own launcher icon — deliberately distinct from
+         plain "app_name" ("Atlas"), which is already the HOME app's own label; two drawer entries
+         both just called "Atlas" would be indistinguishable. -->
+    <string name="atlas_chat_launcher_label">Chat Atlas</string>
+    <string name="atlas_notes_launcher_label">Notas Atlas</string>
+    <string name="atlas_connect_launcher_label">Atlas Connect</string>
+    <string name="atlas_connect_nfc_service_description">Pareamento do Atlas Connect</string>
+    <string name="atlas_connect_nfc_aid_group_description">Convite de pareamento Atlas</string>
+</resources>

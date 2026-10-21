@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HCE service descriptor for Atlas Connect's NFC pairing (NfcCardService) — see
+     NfcCardTransfer's own doc for why HCE, not Android Beam, is the only phone-to-phone NFC
+     route left. category="other" (not "payment") since this has nothing to do with payments. -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/atlas_connect_nfc_service_description"
+    android:requireDeviceUnlock="false">
+    <aid-group
+        android:description="@string/atlas_connect_nfc_aid_group_description"
+        android:category="other">
+        <aid-filter android:name="F041544C4153" />
+    </aid-group>
+</host-apdu-service>
