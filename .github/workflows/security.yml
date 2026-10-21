@@ -1,0 +1,124 @@
+name: Atlas security checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Android tests and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-37"
+      - name: Run cryptography tests, lint, and debug build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --max-workers=2 \
+            :core:security:testDebugUnitTest \
+            :app:lintDebug \
+            :app:assembleDebug
+
+  database:
+    name: Supabase migrations, RLS tests, and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@v3
+        with:
+          version: "2.111.0"
+      - name: Start a clean local Supabase stack
+        run: supabase start
+      - name: Run pgTAP security tests
+        run: supabase test db
+      - name: Lint local database schema
+        run: supabase db lint --local --fail-on error
+      - name: Stop local Supabase stack
+        if: always()
+        run: supabase stop
+
+  codeql:
+    name: CodeQL SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-37"
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin, javascript-typescript
+          build-mode: autobuild
+      - uses: github/codeql-action/analyze@v4
+
+  secret-scan:
+    name: Gitleaks history scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan Git history without printing secret values
+        run: >-
+          docker run --rm
+          -v "$GITHUB_WORKSPACE:/repo"
+          ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+          git --redact --no-banner /repo
+
+  dependency-graph:
+    name: Submit Gradle dependency graph
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-37"
+      - uses: gradle/actions/dependency-submission@v6
+        with:
+          cache-provider: basic
