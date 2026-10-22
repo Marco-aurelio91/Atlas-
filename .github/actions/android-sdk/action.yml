@@ -1,0 +1,16 @@
+name: Prepare Android SDK
+description: >-
+  Uses the Android SDK preinstalled on GitHub-hosted runners and records the SDK license hashes, so
+  Gradle can download the compileSdk platform and build-tools by itself. Replaces
+  android-actions/setup-android, whose newer sdkmanager prompts for each license interactively and
+  fails in CI ("licenses not accepted").
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+        mkdir -p "$sdk/licenses"
+        printf '\n24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e\n' > "$sdk/licenses/android-sdk-license"
+        printf '\n84831b9409646a918e30573bab4c9c91346d8abd\n' > "$sdk/licenses/android-sdk-preview-license"
+        echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"

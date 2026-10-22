@@ -28,9 +28,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v4
-        with:
-          packages: "platform-tools platforms;android-37.0"
+      - uses: ./.github/actions/android-sdk
       - name: Run cryptography tests, lint, and debug build
         run: |
           chmod +x ./gradlew
@@ -76,9 +74,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v4
-        with:
-          packages: "platform-tools platforms;android-37.0"
+      - uses: ./.github/actions/android-sdk
       - uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin, javascript-typescript
@@ -116,9 +112,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v4
-        with:
-          packages: "platform-tools platforms;android-37.0"
+      - uses: ./.github/actions/android-sdk
       - uses: gradle/actions/dependency-submission@v6
         with:
           cache-provider: basic
