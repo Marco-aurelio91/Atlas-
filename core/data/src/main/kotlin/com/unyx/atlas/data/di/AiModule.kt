@@ -1,10 +1,13 @@
 package com.unyx.atlas.data.di
 
+import android.content.Context
+import com.unyx.atlas.data.ai.AiUsageMeter
 import com.unyx.atlas.data.ai.ClaudeClient
 import com.unyx.atlas.data.ai.GeminiChatClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -37,7 +40,12 @@ object AiModule {
 
     @Provides
     @Singleton
-    fun provideClaudeClient(@ClaudeHttpClient http: OkHttpClient): ClaudeClient = ClaudeClient(http = http)
+    fun provideAiUsageMeter(@ApplicationContext context: Context): AiUsageMeter = AiUsageMeter(context)
+
+    @Provides
+    @Singleton
+    fun provideClaudeClient(@ClaudeHttpClient http: OkHttpClient, usageMeter: AiUsageMeter): ClaudeClient =
+        ClaudeClient(http = http, usageMeter = usageMeter)
 
     // Shares ClaudeHttpClient's OkHttpClient rather than a dedicated one — the fallback only ever
     // fires when Claude itself is down, infrequent enough that a second connection pool/timeout

@@ -137,6 +137,7 @@ class ClaudeClient(
     private val http: OkHttpClient,
     private val supabaseUrl: String = BuildConfig.SUPABASE_URL,
     private val supabaseAnonKey: String = BuildConfig.SUPABASE_ANON_KEY,
+    private val usageMeter: AiUsageMeter? = null,
 ) {
     val isConfigured: Boolean get() = supabaseUrl.isNotBlank() && supabaseAnonKey.isNotBlank()
 
@@ -346,6 +347,11 @@ class ClaudeClient(
             val blockIndexOrder = mutableListOf<Int>()
             val runningText = StringBuilder()
             var stopReason: String? = null
+            // Provider-reported token usage for this one gateway call (see AiUsageMeter).
+            var inputTokens = 0L
+            var cacheReadTokens = 0L
+            var cacheWriteTokens = 0L
+            var outputTokens = 0L
 
             while (true) {
                 val line = source.readUtf8Line() ?: break
@@ -401,17 +407,29 @@ class ClaudeClient(
                             }
                         }
                     }
+                    "message_start" -> {
+                        event.optJSONObject("message")?.optJSONObject("usage")?.let { usage ->
+                            inputTokens = usage.optLong("input_tokens")
+                            cacheReadTokens = usage.optLong("cache_read_input_tokens")
+                            cacheWriteTokens = usage.optLong("cache_creation_input_tokens")
+                            outputTokens = maxOf(outputTokens, usage.optLong("output_tokens"))
+                        }
+                    }
                     "message_delta" -> {
                         event.optJSONObject("delta")?.let { if (it.has("stop_reason")) stopReason = it.optString("stop_reason") }
+                        // output_tokens here is cumulative for the message.
+                        event.optJSONObject("usage")?.let { outputTokens = maxOf(outputTokens, it.optLong("output_tokens")) }
                     }
                     "message_stop" -> break
                     "error" -> {
                         val message = event.optJSONObject("error")?.optString("message") ?: "Erro desconhecido"
                         throw IOException("Claude API stream error: $message")
                     }
-                    // "message_start", "content_block_stop", "ping" carry nothing this needs.
+                    // "content_block_stop" and "ping" carry nothing this needs.
                 }
             }
+
+            usageMeter?.record(inputTokens, cacheReadTokens, cacheWriteTokens, outputTokens)
 
             val contentArray = JSONArray()
             for (index in blockIndexOrder.distinct().sorted()) {

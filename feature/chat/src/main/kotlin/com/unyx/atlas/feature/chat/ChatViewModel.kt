@@ -218,6 +218,7 @@ class ChatViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val memoryRepository: MemoryRepository,
     private val aiResponseReporter: com.unyx.atlas.memory.AiResponseReporter,
+    private val aiUsageMeter: com.unyx.atlas.data.ai.AiUsageMeter,
     private val appRepository: AppRepository,
     private val weatherRepository: WeatherRepository,
     private val chatClient: AtlasChatClient,
@@ -1028,6 +1029,9 @@ class ChatViewModel @Inject constructor(
             onResult(result.isSuccess)
         }
     }
+
+    /** Last 7 days of AI token usage measured on this device (newest first) — see DebugScreen. */
+    fun aiUsageDays(): List<com.unyx.atlas.data.ai.AiDayUsage> = aiUsageMeter.recent(7)
 
     fun onChatResumed() {
         refreshMemoryContext()
