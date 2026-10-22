@@ -18,4 +18,10 @@ object ChatNotificationScheduler {
         val request = PeriodicWorkRequestBuilder<ChatNotificationWorker>(15, TimeUnit.MINUTES).build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP, request)
     }
+
+    /** Stops the poll — used while Atlas Connect is hidden, so a build that previously scheduled it
+     *  doesn't keep waking the app for a feature nobody can reach. */
+    fun cancel(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(WORK)
+    }
 }

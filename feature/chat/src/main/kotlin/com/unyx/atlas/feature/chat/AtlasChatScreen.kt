@@ -74,7 +74,7 @@ fun AtlasChatScreen(
     onAuthCallbackConsumed: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenNotes: () -> Unit = {},
-    onOpenAtlasConnect: () -> Unit = {},
+    onOpenAtlasConnect: (() -> Unit)? = null,
     onOpenSettings: () -> Unit = {},
     assistantVoiceRequested: Boolean = false,
     onAssistantVoiceConsumed: () -> Unit = {},
@@ -165,6 +165,8 @@ fun AtlasChatScreen(
                         onSend = viewModel::sendMessage,
                         onRetry = viewModel::retryLastMessage,
                         onReportMessage = viewModel::reportAiResponse,
+                        quotaExceeded = viewModel.quotaExceeded,
+                        onDismissQuota = viewModel::dismissQuotaBanner,
                         isSending = viewModel.isSending,
                         executingTool = viewModel.executingTool,
                         streamingText = viewModel.streamingText,
@@ -309,9 +311,11 @@ fun AtlasChatScreen(
                             showChatEntryMenu = false
                             coroutineScope.launch { drawerState.open() }
                         },
-                        onOpenAtlasConnect = {
-                            showChatEntryMenu = false
-                            onOpenAtlasConnect()
+                        onOpenAtlasConnect = onOpenAtlasConnect?.let { open ->
+                            {
+                                showChatEntryMenu = false
+                                open()
+                            }
                         },
                     )
                 }
@@ -348,7 +352,7 @@ private fun ChatEntryMenuSheet(
     onDismiss: () -> Unit,
     onNewAtlasConversation: () -> Unit,
     onOpenHistory: () -> Unit,
-    onOpenAtlasConnect: () -> Unit,
+    onOpenAtlasConnect: (() -> Unit)?,
 ) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
@@ -362,10 +366,12 @@ private fun ChatEntryMenuSheet(
             leadingContent = { Icon(Icons.Default.History, contentDescription = null) },
             modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenHistory),
         )
-        ListItem(
-            headlineContent = { Text("Atlas Connect") },
-            leadingContent = { Icon(Icons.Default.People, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAtlasConnect),
-        )
+        if (onOpenAtlasConnect != null) {
+            ListItem(
+                headlineContent = { Text("Atlas Connect") },
+                leadingContent = { Icon(Icons.Default.People, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAtlasConnect),
+            )
+        }
     }
 }

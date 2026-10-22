@@ -41,7 +41,7 @@ class LauncherApplication : Application(), SingletonImageLoader.Factory, Configu
         // Atlas Connect's own background poll (plan §15) — same unconditional-at-startup
         // reasoning as AutomationScheduler just above: an idle poll with no pairings yet costs
         // nothing worth branching on.
-        ChatNotificationScheduler.schedule(this)
+        if (BuildConfig.ATLAS_CONNECT_ENABLED) ChatNotificationScheduler.schedule(this) else ChatNotificationScheduler.cancel(this)
         // Deadline nudges as system notifications while the chat is closed — same unconditional
         // scheduling; the worker no-ops when signed out or notifications are off.
         ProactiveNudgeWorker.schedule(this)

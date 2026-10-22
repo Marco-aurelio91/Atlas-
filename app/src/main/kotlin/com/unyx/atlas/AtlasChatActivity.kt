@@ -61,7 +61,11 @@ class AtlasChatActivity : ComponentActivity() {
                     assistantVoiceRequested = pendingAssistantVoice,
                     onAssistantVoiceConsumed = { pendingAssistantVoice = false },
                     onOpenNotes = { startActivity(Intent(this, NotesActivity::class.java)) },
-                    onOpenAtlasConnect = { startActivity(Intent(this, AtlasConnectActivity::class.java)) },
+                    onOpenAtlasConnect = if (BuildConfig.ATLAS_CONNECT_ENABLED) {
+                        { startActivity(Intent(this, AtlasConnectActivity::class.java)) }
+                    } else {
+                        null
+                    },
                     onOpenSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
                 )
             }

@@ -7,6 +7,11 @@ plugins {
     id("atlas.android.hilt")
 }
 
+// Atlas Connect (human-to-human E2EE chat) is hidden in v1: it is a different product promise, its
+// protocol has no independent audit yet, and it adds camera/NFC permissions to the store listing.
+// The code stays in the repo. Flip it back on with `-Patlas.connect=true` (or gradle.properties).
+val atlasConnectEnabled = (findProperty("atlas.connect") as String?) == "true"
+
 // Release signing is read from keystore.properties (gitignored, never committed). On a machine
 // without the key file the release build is simply left unsigned instead of failing.
 val keystorePropsFile = rootProject.file("keystore.properties")
@@ -22,6 +27,14 @@ android {
         versionCode = 60
         versionName = "0.7.45"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("boolean", "ATLAS_CONNECT_ENABLED", atlasConnectEnabled.toString())
+        // Consumed by AndroidManifest.xml (android:enabled of the Connect activity and NFC service).
+        // The camera/NFC permissions can't be toggled by placeholder; see the note in the manifest.
+        manifestPlaceholders["atlasConnectEnabled"] = atlasConnectEnabled.toString()
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     signingConfigs {

@@ -66,22 +66,26 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
+    <!-- ATLAS CONNECT HIDDEN IN v1: the six camera/NFC entries below are marked tools:node="remove" so
+         the store listing doesn't carry permissions for a feature that isn't shipped (see
+         app/build.gradle.kts, flag atlas.connect). To bring Connect back, build with
+         -Patlas.connect=true AND delete every tools:node="remove" attribute in this block. -->
     <!-- Dangerous permission (runtime prompt required): Atlas Connect's QR-scanning pairing
          screen (CameraX preview + ML Kit barcode decode). Requested lazily when the user taps
          "Ler QR", not at app start — same pattern as RECORD_AUDIO above. A denial falls back to
          "apresentar meu QR" instead of blocking the whole screen, per
          docs/ATLAS_CHAT_Plano_Arquitetura_Layouts_e_Telas.md §11. -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA" tools:node="remove" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" tools:node="remove" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" tools:node="remove" />
 
     <!-- Atlas Connect's NFC pairing (tap-to-pair alternative to the QR flow) — no runtime prompt,
          NFC is a normal permission. android:required="false" on both features so a device
          without NFC/HCE hardware still installs fine; the UI itself only offers NFC when
          PackageManager reports FEATURE_NFC_HOST_CARD_EMULATION. -->
-    <uses-permission android:name="android.permission.NFC" />
-    <uses-feature android:name="android.hardware.nfc" android:required="false" />
-    <uses-feature android:name="android.hardware.nfc.hce" android:required="false" />
+    <uses-permission android:name="android.permission.NFC" tools:node="remove" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" tools:node="remove" />
+    <uses-feature android:name="android.hardware.nfc.hce" android:required="false" tools:node="remove" />
 
     <application
         android:name=".LauncherApplication"
@@ -114,6 +118,7 @@
              exported surface. -->
         <service
             android:name="com.unyx.atlas.feature.connect.nfc.NfcCardService"
+            android:enabled="${atlasConnectEnabled}"
             android:exported="true"
             android:permission="android.permission.BIND_NFC_SERVICE">
             <intent-filter>
@@ -249,6 +254,7 @@
              own comment above: no shared back stack, own app-drawer icon. -->
         <activity
             android:name=".AtlasConnectActivity"
+            android:enabled="${atlasConnectEnabled}"
             android:exported="true"
             android:launchMode="singleTask"
             android:taskAffinity="${applicationId}.connect"

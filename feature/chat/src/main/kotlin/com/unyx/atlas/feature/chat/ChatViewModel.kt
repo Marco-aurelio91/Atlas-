@@ -209,6 +209,10 @@ data class ProactiveNudge(
     val sourceKey: String,
 )
 
+/** The AI gateway answers 429 `ai_quota_exceeded` when the plan's message limit is used up. */
+internal fun isAiQuotaExceeded(message: String): Boolean =
+    message.contains("ai_quota_exceeded", ignoreCase = true) || message.contains("HTTP 429")
+
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -375,6 +379,14 @@ class ChatViewModel @Inject constructor(
     var executingTool by mutableStateOf<String?>(null)
         private set
     var chatError by mutableStateOf<String?>(null)
+
+    /** True after the gateway answered 429 `ai_quota_exceeded` — the daily AI message limit of the
+     * current plan. Cleared when the user dismisses the banner or a later AI reply succeeds. */
+    var quotaExceeded by mutableStateOf(false)
+
+    fun dismissQuotaBanner() {
+        quotaExceeded = false
+    }
 
     /** The "nome" identity fact ([MemoryViewModel]'s own `IDENTITY_FACT_KEYS`), first token only —
      * used solely for [ChatScreen]'s empty-state greeting ("Bom dia, Marco"); null (falls back to
@@ -1565,6 +1577,7 @@ class ChatViewModel @Inject constructor(
                             chatError = "A resposta chegou, mas a conversa não pôde ser salva neste dispositivo."
                         }
                     }
+                    quotaExceeded = false
                     selectedMemory?.let { markSelectedMemoryAsync(it.usage) }
                     markUsedAsync("memory_episodes", semanticEpisodes)
                     if (reply.actions.isNotEmpty()) refreshMemoryContext()
@@ -1573,7 +1586,15 @@ class ChatViewModel @Inject constructor(
                 }
                 .onFailure {
                     val message = it.message ?: "Falha ao falar com o Claude"
-                    if (currentConversationId == conversationId) chatError = message
+                    if (isAiQuotaExceeded(message)) {
+                        // Daily AI limit reached: not an error to retry. Device commands that never
+                        // leave the phone (LocalCommandRouter, tried before the AI) keep working, and
+                        // the banner offers the upgrade.
+                        quotaExceeded = true
+                        if (currentConversationId == conversationId) chatError = null
+                    } else if (currentConversationId == conversationId) {
+                        chatError = message
+                    }
                     pendingVoiceReply = false
                 }
             isSending = false

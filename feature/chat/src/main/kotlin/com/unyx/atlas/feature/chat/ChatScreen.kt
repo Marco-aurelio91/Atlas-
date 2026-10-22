@@ -175,6 +175,8 @@ fun ChatScreen(
     onStopSpeaking: () -> Unit = {},
     onSpeakMessage: (String) -> Unit = {},
     onReportMessage: (com.unyx.atlas.memory.AiReportReason, String, (Boolean) -> Unit) -> Unit = { _, _, _ -> },
+    quotaExceeded: Boolean = false,
+    onDismissQuota: () -> Unit = {},
     speakRepliesEnabled: Boolean = true,
     handsFreeModeEnabled: Boolean = false,
     speechRateValue: Float = 1.1f,
@@ -378,6 +380,10 @@ fun ChatScreen(
                         Text("Tentar novamente")
                     }
                 }
+            }
+
+            if (quotaExceeded) {
+                QuotaReachedBanner(onDismiss = onDismissQuota)
             }
 
             if (voiceError != null) {
@@ -1364,6 +1370,56 @@ private fun MessageRow(
                 )
             }
         }
+    }
+}
+
+/** Shown when the plan's daily AI message limit is used up. Says what still works (anything that
+ * runs on the device and never goes to Claude or Gemini) and offers the upgrade — billing itself is
+ * not wired yet, so the dialog is upfront about that instead of pretending to sell something. */
+@Composable
+private fun QuotaReachedBanner(onDismiss: () -> Unit) {
+    var showPlans by remember { mutableStateOf(false) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Text(
+            "Você chegou ao limite de mensagens com IA de hoje.",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        Text(
+            "Os comandos do aparelho que não precisam de IA continuam funcionando: abrir apps, volume, brilho, alarme e timer. O limite volta amanhã.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Row {
+            TextButton(onClick = { showPlans = true }) { Text("Fazer upgrade") }
+            TextButton(onClick = onDismiss) { Text("Fechar") }
+        }
+    }
+    if (showPlans) {
+        AlertDialog(
+            onDismissRequest = { showPlans = false },
+            title = { Text("Planos do Atlas") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Gratuito: 15 mensagens com IA por dia.")
+                    Text("Pro: 60 mensagens com IA por dia.")
+                    Text(
+                        "A contratação do plano Pro ainda não está disponível no app — estamos finalizando. " +
+                            "Seus comandos locais e todos os recursos que não usam IA seguem sem limite.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            },
+            confirmButton = { TextButton(onClick = { showPlans = false }) { Text("Entendi") } },
+        )
     }
 }
 

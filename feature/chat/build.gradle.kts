@@ -38,4 +38,7 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.play.services.location)
     ksp(libs.androidx.hilt.compiler)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.google.truth)
 }
