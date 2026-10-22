@@ -160,32 +160,6 @@ fun DebugScreen(
                 }
 
                 item { HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp)) }
-                item { SectionTitle("Consumo de IA neste aparelho (últimos 7 dias)") }
-                item {
-                    val days = chatViewModel.aiUsageDays()
-                    if (days.isEmpty()) {
-                        EmptyHint("Ainda sem medições: o consumo é registrado a cada chamada ao Claude.")
-                    } else {
-                        Column {
-                            days.forEach { day ->
-                                Text(
-                                    text = "${day.date} · ${day.requests} chamadas · entrada ${day.inputTokens} + cache ${day.cacheReadTokens} · saída ${day.outputTokens} · ≈ US$ ${"%.3f".format(com.unyx.atlas.data.ai.AiUsageCost.estimateUsd(day))}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(vertical = 2.dp),
-                                )
-                            }
-                            com.unyx.atlas.data.ai.AiUsageCost.averageUsdPerRequest(days)?.let { avg ->
-                                Text(
-                                    text = "Média ≈ US$ ${"%.4f".format(avg)} por chamada (estimativa pela tabela de preços do Sonnet 5).",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-                item { HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp)) }
                 item { SectionTitle("Sugestões proativas atuais (${chatViewModel.proactiveNudges.size})") }
                 items(chatViewModel.proactiveNudges) { nudge ->
                     Text(text = "• ${nudge.text}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 4.dp))

@@ -33,6 +33,8 @@ class AtlasChatClient @Inject constructor(
         onToolCall: suspend (name: String, input: JSONObject) -> String = { _, _ -> "" },
         onActivity: (toolName: String?) -> Unit = {},
         onTextUpdate: (text: String) -> Unit = {},
+        // Per-request context sent after the cacheable system prompt (see ClaudeClient.buildSystemField).
+        volatileContext: String? = null,
     ): ClaudeReply {
         var localToolExecuted = false
         val dispatchedActions = mutableListOf<ClaudeAction>()
@@ -51,7 +53,10 @@ class AtlasChatClient @Inject constructor(
         if (claudeClient.isConfigured) {
             val result = try {
                 Result.success(
-                    claudeClient.send(history, accessToken, systemPrompt, maxTokens, tools, guardedToolCall, onActivity, onTextUpdate),
+                    claudeClient.send(
+                        history, accessToken, systemPrompt, maxTokens, tools, guardedToolCall, onActivity, onTextUpdate,
+                        volatileContext = volatileContext,
+                    ),
                 )
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -84,6 +89,10 @@ class AtlasChatClient @Inject constructor(
         val fallbackSystemPrompt = buildString {
             if (!systemPrompt.isNullOrBlank()) {
                 append(systemPrompt)
+                append("\n\n")
+            }
+            if (!volatileContext.isNullOrBlank()) {
+                append(volatileContext)
                 append("\n\n")
             }
             if (tools.isEmpty()) {

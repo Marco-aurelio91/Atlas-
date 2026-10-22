@@ -72,6 +72,7 @@ class SettingsViewModel @Inject constructor(
     private val accountKeyManager: AtlasAccountKeyManager,
     private val recoveryRepository: AccountKeyRecoveryRepository,
     private val memoryRepository: MemoryRepository,
+    private val aiUsageMeter: com.unyx.atlas.data.ai.AiUsageMeter,
 ) : ViewModel() {
     val authState = authRepository.state
     val overlayEnabled = settingsRepository.overlayEnabled
@@ -79,6 +80,9 @@ class SettingsViewModel @Inject constructor(
     suspend fun setOverlayEnabled(enabled: Boolean) {
         settingsRepository.setOverlayEnabled(enabled)
     }
+
+    /** Last 7 days of AI token usage measured on this device, newest first (see AiUsageMeter). */
+    fun aiUsageDays(): List<com.unyx.atlas.data.ai.AiDayUsage> = aiUsageMeter.recent(7)
 
     private val _exportState = MutableStateFlow(DataExportUiState())
     val exportState: StateFlow<DataExportUiState> = _exportState.asStateFlow()

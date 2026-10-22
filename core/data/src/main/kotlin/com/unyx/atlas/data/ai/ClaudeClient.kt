@@ -133,6 +133,30 @@ private const val MAX_NETWORK_TIME_MILLIS = 55_000L
  * one-shot call with `tools = emptyList()` like feature:notes' ✨ menu — can issue Claude requests
  * without a feature-on-feature module dependency.
  */
+/**
+ * The `system` field of a request. When [volatileContext] is given the prompt goes out as two
+ * blocks and only the first — [stablePrompt] — carries the cache breakpoint: render order is
+ * tools -> system -> messages, so the cached prefix is the tool list plus the fixed
+ * instructions, and the per-request part (clock, battery, retrieved memory) can change every
+ * turn without invalidating it. Everything in the system prompt used to be a single string that
+ * included the current minute, so the prefix never matched and each call paid the cache-write
+ * premium for nothing (measured on a device: ~10.8k tokens written, 0 read).
+ */
+internal fun buildSystemField(stablePrompt: String?, volatileContext: String?): Any? {
+    val stable = stablePrompt?.takeIf { it.isNotBlank() }
+    val volatile = volatileContext?.takeIf { it.isNotBlank() }
+    return when {
+        volatile == null -> stable
+        stable == null -> JSONArray().put(JSONObject().put("type", "text").put("text", volatile))
+        else -> JSONArray()
+            .put(
+                JSONObject().put("type", "text").put("text", stable)
+                    .put("cache_control", JSONObject().put("type", "ephemeral")),
+            )
+            .put(JSONObject().put("type", "text").put("text", volatile))
+    }
+}
+
 class ClaudeClient(
     private val http: OkHttpClient,
     private val supabaseUrl: String = BuildConfig.SUPABASE_URL,
@@ -160,6 +184,9 @@ class ClaudeClient(
         // instead of answering (that round's text isn't part of the final reply either — see the
         // stop_reason check below, unchanged from the non-streaming version).
         onTextUpdate: (text: String) -> Unit = {},
+        // Per-request context kept OUT of [systemPrompt] so the stable part can be cached — see
+        // buildSystemField. Null keeps the old single-string behavior (and message-level caching).
+        volatileContext: String? = null,
     ): ClaudeReply {
         require(isConfigured) { "O gateway de IA do Supabase não está configurado neste app." }
         require(accessToken.isNotBlank()) { "Entre na sua conta para usar a IA do Atlas." }
@@ -170,7 +197,9 @@ class ClaudeClient(
             // cacheable — Anthropic's prompt caching then reuses those tokens at a fraction of the
             // normal input price on the *next* call instead of re-billing the whole transcript
             // every turn. Harmless if unsupported: the field is just ignored.
-            val cacheable = capped.size > 1 && index == capped.lastIndex - 1
+            // With a volatile system block ahead of the messages the history can't match a cached
+            // prefix anyway, so the breakpoint would only add the cache-write premium: skip it.
+            val cacheable = volatileContext == null && capped.size > 1 && index == capped.lastIndex - 1
             // modelText (Claude's own words, without our appended "✓ ..." confirmation) is what
             // gets replayed — see ChatMessage's doc for why sending the confirmation-decorated
             // text back would be a mistake.
@@ -194,7 +223,7 @@ class ClaudeClient(
             if (remainingMillis <= 0L) throw IOException("O Atlas excedeu o tempo limite de comunicação com o serviço de IA.")
             val responseJson = withTimeoutOrNull(remainingMillis) {
                 withContext(Dispatchers.IO) {
-                    requestOnceStreaming(messagesJson, accessToken, systemPrompt, maxTokens, tools, onTextUpdate)
+                    requestOnceStreaming(messagesJson, accessToken, systemPrompt, maxTokens, tools, onTextUpdate, volatileContext)
                 }
             } ?: throw IOException("O Atlas excedeu o tempo limite de comunicação com o serviço de IA.")
             val contentArray = responseJson.getJSONArray("content")
@@ -292,11 +321,12 @@ class ClaudeClient(
         maxTokens: Int,
         tools: List<ClaudeTool>,
         onTextUpdate: (text: String) -> Unit,
+        volatileContext: String? = null,
     ): JSONObject {
         val body = JSONObject().apply {
             put("max_tokens", maxTokens)
             put("stream", true)
-            if (!systemPrompt.isNullOrBlank()) put("system", systemPrompt)
+            buildSystemField(systemPrompt, volatileContext)?.let { put("system", it) }
             put("messages", messages)
             if (tools.isNotEmpty()) {
                 put(

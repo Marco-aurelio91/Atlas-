@@ -218,7 +218,6 @@ class ChatViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val memoryRepository: MemoryRepository,
     private val aiResponseReporter: com.unyx.atlas.memory.AiResponseReporter,
-    private val aiUsageMeter: com.unyx.atlas.data.ai.AiUsageMeter,
     private val appRepository: AppRepository,
     private val weatherRepository: WeatherRepository,
     private val chatClient: AtlasChatClient,
@@ -1030,9 +1029,6 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    /** Last 7 days of AI token usage measured on this device (newest first) — see DebugScreen. */
-    fun aiUsageDays(): List<com.unyx.atlas.data.ai.AiDayUsage> = aiUsageMeter.recent(7)
-
     fun onChatResumed() {
         refreshMemoryContext()
         if (proactiveRefreshJob?.isActive == true) return
@@ -1520,10 +1516,14 @@ class ChatViewModel @Inject constructor(
                 emptyList()
             }
             val usedMemory = selectedMemory != null || semanticEpisodes.isNotEmpty()
+            // Stable part first (instructions, cacheable together with the tool list) and the part that
+            // changes on every request — clock, battery, retrieved memory — kept apart: see
+            // ClaudeClient.buildSystemField for why this matters for cost.
             val systemPrompt = buildString {
                 append(DEFAULT_SYSTEM_PROMPT)
                 append("\n\nSe o usuário corrigir a intenção ou o público do pedido, aceite a correção de forma direta, sem ironia, brincadeira ou comentário sobre a própria identidade. Ao preparar uma apresentação, biografia ou texto para compartilhar, use apenas dados de marca e informações fornecidas explicitamente para esse texto; não inclua nome, projetos, contatos, localização ou outras informações pessoais da memória. Se perguntarem sobre recursos do app ou pedirem uma automação incompatível, consulte a ferramenta de capacidades e explique com precisão o que está disponível e quais limites do Android se aplicam.")
-                append("\n\n")
+            }
+            val volatileContext = buildString {
                 append(currentDateTimeContext())
                 append("\n")
                 append(currentDeviceContext(appContext))
@@ -1536,13 +1536,14 @@ class ChatViewModel @Inject constructor(
                     interactionStyleHint(history)?.let { append("\n\n"); append(it) }
                 }
             }
-            lastSystemPromptSent = systemPrompt
+            lastSystemPromptSent = systemPrompt + "\n\n" + volatileContext
             val result = runCatching {
                 chatClient.send(
                     history = history.withoutPreviousPdfAttachments(),
                     accessToken = authRepository.currentAccessToken()
                         ?: error("Entre na sua conta para conversar com o Atlas."),
                     systemPrompt = systemPrompt,
+                    volatileContext = volatileContext,
                     tools = ATLAS_TOOLS,
                     onToolCall = ::executeTool,
                     onActivity = { toolName ->

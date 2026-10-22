@@ -214,6 +214,9 @@ fun SettingsScreen(
                 CollapsibleSection(title = "Conta: autenticação em duas etapas") {
                     AtlasMfaContent(viewModel = viewModel, userId = signedInUserId)
                 }
+                CollapsibleSection(title = "Uso de IA neste aparelho") {
+                    AiUsageContent(viewModel = viewModel)
+                }
                 CollapsibleSection(title = "Conta: exportar meus dados") {
                     DataExportContent(viewModel = viewModel, userId = signedInUserId)
                 }
