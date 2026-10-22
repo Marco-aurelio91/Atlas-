@@ -179,6 +179,24 @@ class AuthRepository(
         refreshMutex.withLock { signOutLocally() }
     }
 
+    /**
+     * Deletes the account on the server, then signs out locally. Local state is only cleared after
+     * the server confirmed — a failed or offline attempt leaves the session intact so the user can
+     * retry instead of being logged out of an account that still exists.
+     */
+    suspend fun deleteAccount(): Result<Unit> = withContext(ioDispatcher) {
+        val token = currentAccessToken() ?: return@withContext Result.failure(IllegalStateException("Sem sessão ativa."))
+        try {
+            client.deleteAccount(token)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            return@withContext Result.failure(failure)
+        }
+        refreshMutex.withLock { signOutLocally() }
+        Result.success(Unit)
+    }
+
     private fun finishSignIn(authSession: AuthSession) {
         // Fail closed if Auth cannot enumerate factors. Otherwise a transient Auth error could
         // silently bypass MFA and persist an AAL1 session when the account has TOTP enabled.

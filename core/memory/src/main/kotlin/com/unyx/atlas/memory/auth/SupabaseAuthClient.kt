@@ -169,6 +169,28 @@ class SupabaseAuthClient(
         )
     }
 
+    /**
+     * Permanently deletes the signed-in user's account and, through ON DELETE CASCADE, everything
+     * stored under it. Goes through the `atlas-account-delete` Edge Function because deleting an Auth
+     * user needs the service-role key, which must never ship in the app. The function only ever
+     * deletes the caller (the id comes from the verified JWT) and insists on the explicit
+     * [ACCOUNT_DELETION_CONFIRMATION] word.
+     */
+    fun deleteAccount(accessToken: String) {
+        require(isConfigured) { "Supabase Auth isn't configured (missing URL/key) — see supabase.properties" }
+        require(accessToken.isNotBlank()) { "An authenticated session is required" }
+        val body = JSONObject().put("confirm", ACCOUNT_DELETION_CONFIRMATION)
+        val req = Request.Builder()
+            .url("$baseUrl/functions/v1/atlas-account-delete")
+            .header("apikey", apiKey)
+            .header("Authorization", "Bearer $accessToken")
+            .post(body.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+        http.newCall(req).execute().use { resp ->
+            if (!resp.isSuccessful) throw IOException("Atlas account deletion HTTP ${resp.code}")
+        }
+    }
+
     fun signOut(accessToken: String) {
         val req = Request.Builder()
             .url("$baseUrl/auth/v1/logout")
@@ -296,6 +318,9 @@ class SupabaseAuthClient(
         )
     }
 }
+
+/** The word the user types (and the server requires) to confirm permanent account deletion. */
+const val ACCOUNT_DELETION_CONFIRMATION = "EXCLUIR"
 
 private fun encodePathSegment(value: String): String =
     java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20")

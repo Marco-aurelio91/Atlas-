@@ -7,6 +7,9 @@ project_id = "atlas-athena"
 [functions.atlas-ai]
 verify_jwt = true
 
+[functions.atlas-account-delete]
+verify_jwt = true
+
 # Partner-app gateway (e.g. Unyx) — authenticated by a per-app key checked INSIDE the function
 # (atlas_sdk_authorize_and_claim), not by a Supabase Auth JWT. Partner apps have their own,
 # separate user base; there is no Atlas JWT for them to present. See atlas-sdk/index.ts.

@@ -23,6 +23,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+data class AccountDeletionUiState(
+    val busy: Boolean = false,
+    val error: String? = null,
+)
+
 data class AtlasSecurityUiState(
     val keyState: AccountKeyState? = null,
     val persistentStorageAvailable: Boolean = true,
@@ -67,6 +72,29 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun setOverlayEnabled(enabled: Boolean) {
         settingsRepository.setOverlayEnabled(enabled)
+    }
+
+    private val _deletionState = MutableStateFlow(AccountDeletionUiState())
+    val deletionState: StateFlow<AccountDeletionUiState> = _deletionState.asStateFlow()
+
+    /** Permanently deletes the signed-in account (server data + session). On success the auth state
+     * flips to LoggedOut by itself, which the Settings screen already reacts to. */
+    fun deleteAccount(userId: String) {
+        if (authRepository.currentUserId() != userId || _deletionState.value.busy) return
+        viewModelScope.launch {
+            _deletionState.value = AccountDeletionUiState(busy = true)
+            val result = authRepository.deleteAccount()
+            _deletionState.value = result.fold(
+                onSuccess = { AccountDeletionUiState() },
+                onFailure = {
+                    AccountDeletionUiState(error = "Não foi possível excluir a conta agora. Verifique a conexão e tente novamente — nada foi apagado.")
+                },
+            )
+        }
+    }
+
+    fun clearDeletionError() {
+        _deletionState.value = _deletionState.value.copy(error = null)
     }
 
     private val _securityState = MutableStateFlow(AtlasSecurityUiState())

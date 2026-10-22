@@ -214,6 +214,9 @@ fun SettingsScreen(
                 CollapsibleSection(title = "Conta: autenticação em duas etapas") {
                     AtlasMfaContent(viewModel = viewModel, userId = signedInUserId)
                 }
+                CollapsibleSection(title = "Conta: excluir minha conta") {
+                    AccountDeletionContent(viewModel = viewModel, userId = signedInUserId)
+                }
 
                 // ATHENA has no screen/plugin identity of its own (2026-09-30 architecture
                 // correction) — it's the perception layer ATLAS queries, not a second assistant.
