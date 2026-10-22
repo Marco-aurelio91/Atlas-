@@ -53,6 +53,11 @@ class AtlasScreenCaptureService : Service() {
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
 
+    /** Guards [imageReader] against being closed while the capture thread is reading an image. */
+    private val readerLock = Any()
+    private var readerClosed = false
+    private var frameTaken = false
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -141,17 +146,32 @@ class AtlasScreenCaptureService : Service() {
         val densityDpi = (displayMetrics.densityDpi * scale).toInt().coerceAtLeast(1)
         require(width > 0 && height > 0) { "The display has invalid dimensions." }
         val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
-        imageReader = reader
+        synchronized(readerLock) {
+            readerClosed = false
+            frameTaken = false
+            imageReader = reader
+        }
         reader.setOnImageAvailableListener({ source ->
-            val image = source.acquireLatestImage() ?: return@setOnImageAvailableListener
-            val bitmap = try {
-                image.toBitmap()
-            } catch (failure: Exception) {
-                Log.e(TAG, "Could not read the captured image buffer.", failure)
-                finish(RESULT_ERROR, Bundle().apply { putString(EXTRA_ERROR, "A imagem capturada estava inválida.") })
-                return@setOnImageAvailableListener
-            } finally {
-                image.close()
+            // Held for the whole read: cleanupCapture() closes the ImageReader under the same lock,
+            // so it can never free the native buffers while this thread is still reading the image
+            // (a close/read race that crashed the process with SIGSEGV in SurfaceImage.getWidth).
+            val bitmap = synchronized(readerLock) {
+                // The virtual display keeps producing frames after the first one; only the first is
+                // wanted. A second callback reading while the first frame's OCR finished and closed
+                // the reader was the source of the AIOOBE/SIGSEGV on a real device.
+                if (readerClosed || frameTaken) return@setOnImageAvailableListener
+                val image = source.acquireLatestImage() ?: return@setOnImageAvailableListener
+                frameTaken = true
+                source.setOnImageAvailableListener(null, null)
+                try {
+                    image.toBitmap()
+                } catch (failure: Exception) {
+                    Log.e(TAG, "Could not read the captured image buffer.", failure)
+                    finish(RESULT_ERROR, Bundle().apply { putString(EXTRA_ERROR, "A imagem capturada estava inválida.") })
+                    return@setOnImageAvailableListener
+                } finally {
+                    image.close()
+                }
             }
             serviceScope.launch {
                 try {
@@ -267,9 +287,12 @@ class AtlasScreenCaptureService : Service() {
     }
 
     private fun cleanupCapture() {
-        imageReader?.setOnImageAvailableListener(null, null)
-        imageReader?.close()
-        imageReader = null
+        synchronized(readerLock) {
+            readerClosed = true
+            imageReader?.setOnImageAvailableListener(null, null)
+            imageReader?.close()
+            imageReader = null
+        }
         virtualDisplay?.release()
         virtualDisplay = null
         projection?.let { activeProjection ->
