@@ -4,7 +4,9 @@ import com.unyx.atlas.memory.auth.AuthRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
+import java.time.Instant
 
 /**
  * The one entry point the rest of the app (chat, and later voice/agents) talks to for reading and
@@ -29,6 +31,28 @@ class MemoryRepository(
         val token = auth.currentAccessToken() ?: throw NotSignedInException()
         val userId = auth.currentUserId() ?: throw NotSignedInException()
         return token to userId
+    }
+
+    /**
+     * Everything stored about the signed-in user, decrypted on this device, grouped by memory table
+     * — the data-portability copy the LGPD (art. 18) asks for. Embeddings are left out: they are
+     * derived vectors, not something the person wrote or can read. Nothing is sent anywhere; the
+     * caller decides where the file goes.
+     */
+    suspend fun exportAll(): JSONObject = withContext(ioDispatcher) {
+        val (token, userId) = requireSession()
+        val tables = JSONObject()
+        secureStore.allRows(token)
+            .filter { (table, _) -> table != "memory_embeddings" }
+            .forEach { (table, row) ->
+                val rows = tables.optJSONArray(table) ?: JSONArray().also { tables.put(table, it) }
+                rows.put(row)
+            }
+        JSONObject()
+            .put("exportado_em", Instant.now().toString())
+            .put("conta", userId)
+            .put("observacao", "Cópia dos dados que o Atlas guarda sobre você, decifrados neste aparelho.")
+            .put("tabelas", tables)
     }
 
     // ---- Facts ----

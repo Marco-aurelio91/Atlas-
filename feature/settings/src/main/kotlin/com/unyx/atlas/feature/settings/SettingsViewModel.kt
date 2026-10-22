@@ -23,6 +23,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+data class DataExportUiState(
+    val busy: Boolean = false,
+    val message: String? = null,
+    val error: String? = null,
+)
+
 data class AccountDeletionUiState(
     val busy: Boolean = false,
     val error: String? = null,
@@ -72,6 +78,30 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun setOverlayEnabled(enabled: Boolean) {
         settingsRepository.setOverlayEnabled(enabled)
+    }
+
+    private val _exportState = MutableStateFlow(DataExportUiState())
+    val exportState: StateFlow<DataExportUiState> = _exportState.asStateFlow()
+
+    /** Writes the user's decrypted data as JSON to the stream [openOutput] returns (the document the
+     * user picked). Stays on this device; the file is the user's to keep or share. */
+    fun exportData(userId: String, openOutput: () -> java.io.OutputStream?) {
+        if (authRepository.currentUserId() != userId || _exportState.value.busy) return
+        viewModelScope.launch {
+            _exportState.value = DataExportUiState(busy = true)
+            _exportState.value = try {
+                val json = memoryRepository.exportAll().toString(2)
+                withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val stream = openOutput() ?: error("Não foi possível abrir o arquivo escolhido.")
+                    stream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                }
+                DataExportUiState(message = "Dados exportados. Guarde o arquivo em um lugar seguro: ele não é cifrado.")
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                DataExportUiState(error = "Não foi possível exportar agora. Verifique a chave de memória e a conexão e tente novamente.")
+            }
+        }
     }
 
     private val _deletionState = MutableStateFlow(AccountDeletionUiState())
