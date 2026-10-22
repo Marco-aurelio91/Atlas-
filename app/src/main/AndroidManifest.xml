@@ -7,13 +7,10 @@
          removed with the rest of the launcher shell, this permission silently disappeared with it. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Also used (alongside WRITE_CALENDAR) by Atlas's create_reminder chat tool. -->
+    <!-- Read-only: feeds the "Meu dia" agenda summary. Creating events (create_reminder) goes
+         through the calendar app's own ACTION_INSERT screen, so there is deliberately no
+         WRITE_CALENDAR — nothing is written to the calendar without the user tapping Save. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
-
-    <!-- Dangerous permission (runtime prompt required): lets Atlas's create_reminder tool insert a
-         real CalendarContract.Events row. Not granted by default — the tool checks
-         checkSelfPermission() first and reports an honest failure rather than crashing. -->
-    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
     <!-- Atlas's get_weather chat tool (Open-Meteo needs rough coordinates); requested at runtime.
          A cached fix is read — no active location requests. FINE is requested alongside COARSE
@@ -30,9 +27,16 @@
          connectivity callbacks throw. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Atlas's open_app chat tool resolves apps by name across everything installed, not just
-         ones it already has a static <queries> declaration for. -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+    <!-- Atlas's open_app chat tool resolves apps by name. Package visibility for every app that has
+         a launcher icon is enough for that (it's exactly the set the tool can open), so this
+         replaces QUERY_ALL_PACKAGES — a permission Google Play restricts to a short list of core
+         use cases and routinely rejects for everything else. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <!-- Normal permission (no runtime prompt): lets Atlas's set_alarm tool pass EXTRA_SKIP_UI so the
          Clock app creates the alarm directly instead of opening its own confirmation screen. Without
@@ -47,7 +51,7 @@
 
     <!-- Dangerous permission (runtime prompt required): lets the chat's voice input use
          android.speech.SpeechRecognizer. Requested lazily the first time the user taps the mic, not
-         at app start — matches WRITE_CALENDAR/ACCESS_COARSE_LOCATION's pattern of asking only when
+         at app start — matches ACCESS_COARSE_LOCATION's pattern of asking only when
          the feature is actually used. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 

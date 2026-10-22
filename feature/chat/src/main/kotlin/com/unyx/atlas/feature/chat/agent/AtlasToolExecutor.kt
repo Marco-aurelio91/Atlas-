@@ -1,7 +1,5 @@
 package com.unyx.atlas.feature.chat.agent
 
-import android.Manifest
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -1098,35 +1096,34 @@ class AtlasToolExecutor @Inject constructor(
             val dataStr = input.optString("data").ifBlank { null }
             if (titulo == null || dataStr == null) {
                 "Não consegui criar o lembrete: título ou data ausente"
-            } else if (appContext.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
-                "Não consegui criar o lembrete: preciso de uma permissão de calendário que ainda não foi concedida"
             } else {
-                withContext(Dispatchers.IO) {
-                    runCatching {
-                        val calendarId = findWritableCalendarId() ?: error("Nenhum calendário disponível no aparelho")
-                        val parts = dataStr.split("-").map { it.toInt() }
-                        val hora = input.optInt("hora", -1)
-                        val minuto = input.optInt("minuto", 0)
-                        val allDay = hora !in 0..23
-                        val cal = java.util.Calendar.getInstance().apply {
-                            set(parts[0], parts[1] - 1, parts[2], if (allDay) 0 else hora, if (allDay) 0 else minuto, 0)
-                        }
-                        val start = cal.timeInMillis
-                        val values = ContentValues().apply {
-                            put(CalendarContract.Events.CALENDAR_ID, calendarId)
-                            put(CalendarContract.Events.TITLE, titulo)
-                            input.optString("descricao").ifBlank { null }?.let { put(CalendarContract.Events.DESCRIPTION, it) }
-                            put(CalendarContract.Events.DTSTART, start)
-                            put(CalendarContract.Events.DTEND, start + if (allDay) 24 * 60 * 60 * 1000L else 60 * 60 * 1000L)
-                            put(CalendarContract.Events.EVENT_TIMEZONE, java.util.TimeZone.getDefault().id)
-                            put(CalendarContract.Events.ALL_DAY, if (allDay) 1 else 0)
-                        }
-                        appContext.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values) ?: error("Falha ao inserir evento")
-                    }.fold(
-                        onSuccess = { "Criei o lembrete '$titulo' para $dataStr" },
-                        onFailure = { "Não consegui criar o lembrete: ${it.message}" },
-                    )
-                }
+                // ACTION_INSERT instead of writing to CalendarContract directly: the calendar app
+                // opens with the event pre-filled and the user taps Save. That needs no calendar
+                // write permission (WRITE_CALENDAR is a sensitive permission on Google Play) and
+                // matches how the rest of the app treats consequential actions — nothing lands in
+                // the user's calendar without their confirmation.
+                runCatching {
+                    val parts = dataStr.split("-").map { it.toInt() }
+                    val hora = input.optInt("hora", -1)
+                    val minuto = input.optInt("minuto", 0)
+                    val allDay = hora !in 0..23
+                    val start = java.util.Calendar.getInstance().apply {
+                        set(parts[0], parts[1] - 1, parts[2], if (allDay) 0 else hora, if (allDay) 0 else minuto, 0)
+                        set(java.util.Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    val intent = Intent(Intent.ACTION_INSERT, CalendarContract.Events.CONTENT_URI).apply {
+                        putExtra(CalendarContract.Events.TITLE, titulo)
+                        input.optString("descricao").ifBlank { null }?.let { putExtra(CalendarContract.Events.DESCRIPTION, it) }
+                        putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, start)
+                        putExtra(CalendarContract.EXTRA_EVENT_END_TIME, start + if (allDay) 24 * 60 * 60 * 1000L else 60 * 60 * 1000L)
+                        putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, allDay)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    appContext.startActivity(intent)
+                }.fold(
+                    onSuccess = { "Abri a agenda com o evento '$titulo' em $dataStr já preenchido; falta o usuário tocar em Salvar para confirmar" },
+                    onFailure = { "Não consegui abrir a agenda para criar o evento: ${it.message}" },
+                )
             }
         }
         "set_brightness" -> {
@@ -1178,7 +1175,12 @@ class AtlasToolExecutor @Inject constructor(
             .minByOrNull { it.label.length }
     }
 
-    private fun String.normalizedForAppMatch(): String = lowercase().filter { it.isLetterOrDigit() }
+    /** Lower-cased, accent-free, letters and digits only — so "configuracoes" (typed or spoken
+     * without the cedilla/tilde) still matches the app labelled "Configurações". */
+    private fun String.normalizedForAppMatch(): String =
+        java.text.Normalizer.normalize(lowercase(), java.text.Normalizer.Form.NFD)
+            .filter { it.isLetterOrDigit() }
+
 
     /** Open-Meteo's WMO weather codes → short Portuguese phrase, for Claude to paraphrase — this
      * result never reaches the user verbatim (see actionConfirmationText), so being a bit terse/
@@ -1196,23 +1198,5 @@ class AtlasToolExecutor @Inject constructor(
         85, 86 -> "pancadas de neve"
         95, 96, 99 -> "trovoada"
         else -> "tempo variável"
-    }
-
-    /** First calendar the device can actually write to (CAL_ACCESS_CONTRIBUTOR or better) — a
-     * device may have several (personal, work, a read-only holidays calendar); picking the first
-     * writable one avoids the more common failure of landing on a read-only calendar and getting a
-     * silent/cryptic insert failure. */
-    private fun findWritableCalendarId(): Long? {
-        val projection = arrayOf(CalendarContract.Calendars._ID, CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL)
-        appContext.contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, null, null, null)?.use { cursor ->
-            val idCol = cursor.getColumnIndexOrThrow(CalendarContract.Calendars._ID)
-            val accessCol = cursor.getColumnIndexOrThrow(CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL)
-            while (cursor.moveToNext()) {
-                if (cursor.getInt(accessCol) >= CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR) {
-                    return cursor.getLong(idCol)
-                }
-            }
-        }
-        return null
     }
 }

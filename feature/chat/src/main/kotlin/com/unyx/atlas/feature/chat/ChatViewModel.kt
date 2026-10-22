@@ -97,7 +97,7 @@ private val ACTION_TOOL_LABELS = mapOf(
     "set_volume" to "Ajustou o volume",
     "set_brightness" to "Ajustou o brilho",
     "send_whatsapp_message" to "Preparou uma mensagem no WhatsApp",
-    "create_reminder" to "Criou um lembrete",
+    "create_reminder" to "Abriu a agenda para criar um evento",
     "call_person" to "Abriu o discador",
     "open_internet_panel" to "Abriu o painel de Internet",
 )
