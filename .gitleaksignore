@@ -1,0 +1,4 @@
+# False positive: FIELD_PRIVATE_KEY is the *name* of a JSON field ("private_key_b64", next to
+# "public_key_b64") in ChatIdentityStore, not a key. The identity key itself is stored encrypted by
+# the Android Keystore wrapper. Fingerprints are exact, so a real secret added later still fails.
+c99b8e8ed7cefc1154e1d1b524ce14ce5e7f011e:core/chat-storage/src/main/kotlin/com/unyx/atlas/chatstorage/ChatIdentityStore.kt:generic-api-key:46
