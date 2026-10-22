@@ -213,6 +213,7 @@ data class ProactiveNudge(
 class ChatViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val memoryRepository: MemoryRepository,
+    private val aiResponseReporter: com.unyx.atlas.memory.AiResponseReporter,
     private val appRepository: AppRepository,
     private val weatherRepository: WeatherRepository,
     private val chatClient: AtlasChatClient,
@@ -1004,6 +1005,16 @@ class ChatViewModel @Inject constructor(
         if (authState.value !is AuthState.LoggedIn) return
         loadMemoryDigest(force = true)
         computeProactiveNudges()
+    }
+
+    /** Sends a user report about an AI response (Play's AI-content policy). [onResult] runs on the
+     * main thread with whether the report was delivered, so the UI can say so honestly. */
+    fun reportAiResponse(reason: com.unyx.atlas.memory.AiReportReason, responseText: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = aiResponseReporter.report(reason, responseText)
+            result.exceptionOrNull()?.let { android.util.Log.w("ChatViewModel", "AI response report failed", it) }
+            onResult(result.isSuccess)
+        }
     }
 
     fun onChatResumed() {

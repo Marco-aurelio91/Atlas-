@@ -4,6 +4,7 @@ import android.content.Context
 import com.unyx.atlas.memory.BuildConfig
 import com.unyx.atlas.memory.AccountKeyRecoveryRepository
 import com.unyx.atlas.memory.AtlasEncryptedObjectRepository
+import com.unyx.atlas.memory.AiResponseReporter
 import com.unyx.atlas.memory.EncryptedMemoryStore
 import com.unyx.atlas.memory.MemoryRepository
 import com.unyx.atlas.memory.SupabaseRestClient
@@ -115,6 +116,13 @@ object MemoryModule {
         apiKey = BuildConfig.SUPABASE_ANON_KEY,
         auth = auth,
     )
+
+    @Provides
+    @Singleton
+    fun provideAiResponseReporter(
+        client: SupabaseRestClient,
+        auth: AuthRepository,
+    ): AiResponseReporter = AiResponseReporter(client, auth)
 
     @Provides
     @Singleton

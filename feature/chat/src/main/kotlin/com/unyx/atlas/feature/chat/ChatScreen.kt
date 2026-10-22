@@ -80,6 +80,11 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import android.widget.Toast
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -169,6 +174,7 @@ fun ChatScreen(
     onCancelVoice: () -> Unit,
     onStopSpeaking: () -> Unit = {},
     onSpeakMessage: (String) -> Unit = {},
+    onReportMessage: (com.unyx.atlas.memory.AiReportReason, String, (Boolean) -> Unit) -> Unit = { _, _, _ -> },
     speakRepliesEnabled: Boolean = true,
     handsFreeModeEnabled: Boolean = false,
     speechRateValue: Float = 1.1f,
@@ -315,6 +321,7 @@ fun ChatScreen(
                                 onOpenMemory = onOpenMemory,
                                 isSpeakingThis = isSpeaking && speakingMessageText == message.content,
                                 onSpeak = { onSpeakMessage(message.content) },
+                                onReport = onReportMessage,
                                 showAssistantLabel = index == 0 || messages.getOrNull(index - 1)?.role != "assistant",
                             )
                         }
@@ -1181,8 +1188,10 @@ private fun MessageRow(
     onOpenMemory: () -> Unit,
     isSpeakingThis: Boolean = false,
     onSpeak: () -> Unit = {},
+    onReport: (com.unyx.atlas.memory.AiReportReason, String, (Boolean) -> Unit) -> Unit = { _, _, _ -> },
     showAssistantLabel: Boolean = true,
 ) {
+    var reporting by remember { mutableStateOf(false) }
     val clipboard = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -1337,9 +1346,68 @@ private fun MessageRow(
                 onShare = { shareText(context, message.content) },
                 onSpeak = onSpeak,
                 isSpeaking = isSpeakingThis,
+                onReport = { reporting = true },
             )
+            if (reporting) {
+                ReportResponseDialog(
+                    onDismiss = { reporting = false },
+                    onSubmit = { reason ->
+                        reporting = false
+                        onReport(reason, message.content) { delivered ->
+                            Toast.makeText(
+                                context,
+                                if (delivered) "Obrigado. Sua denúncia foi enviada." else "Não foi possível enviar a denúncia agora. Tente novamente mais tarde.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                    },
+                )
+            }
         }
     }
+}
+
+/** Asks why the user is flagging an assistant reply and says plainly what gets sent — the reply's
+ * text — before anything leaves the device (Google Play's AI-generated content policy). */
+@Composable
+private fun ReportResponseDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (com.unyx.atlas.memory.AiReportReason) -> Unit,
+) {
+    var selected by remember { mutableStateOf<com.unyx.atlas.memory.AiReportReason?>(null) }
+    val options = listOf(
+        com.unyx.atlas.memory.AiReportReason.HARMFUL to "Ofensiva, perigosa ou inadequada",
+        com.unyx.atlas.memory.AiReportReason.FALSE_INFO to "Informação falsa ou enganosa",
+        com.unyx.atlas.memory.AiReportReason.PRIVACY to "Expõe dados pessoais ou privados",
+        com.unyx.atlas.memory.AiReportReason.OTHER to "Outro motivo",
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Denunciar esta resposta") },
+        text = {
+            Column {
+                Text(
+                    "Ao enviar, o texto desta resposta será enviado ao Atlas para análise. Sua pergunta e o restante da conversa não são enviados.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                options.forEach { (reason, label) ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(selected = selected == reason, role = Role.RadioButton, onClick = { selected = reason })
+                            .padding(vertical = 2.dp),
+                    ) {
+                        RadioButton(selected = selected == reason, onClick = null)
+                        Text(label, modifier = Modifier.padding(start = 8.dp), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(enabled = selected != null, onClick = { selected?.let(onSubmit) }) { Text("Enviar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
 }
 
 /** Small icon-button row under a message bubble — copy and share always, "ouvir"/"parar" only for
@@ -1347,7 +1415,13 @@ private fun MessageRow(
  * visible rather than behind a long-press menu — these are the actions worth a tap on nearly any
  * message, not a rare one needing to be tucked away. */
 @Composable
-private fun MessageActionRow(onCopy: () -> Unit, onShare: () -> Unit, onSpeak: (() -> Unit)? = null, isSpeaking: Boolean = false) {
+private fun MessageActionRow(
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
+    onSpeak: (() -> Unit)? = null,
+    isSpeaking: Boolean = false,
+    onReport: (() -> Unit)? = null,
+) {
     Row(modifier = Modifier.padding(top = 2.dp)) {
         IconButton(onClick = onCopy, modifier = Modifier.size(36.dp)) {
             Icon(
@@ -1370,6 +1444,16 @@ private fun MessageActionRow(onCopy: () -> Unit, onShare: () -> Unit, onSpeak: (
                 Icon(
                     imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
                     contentDescription = if (isSpeaking) "Parar" else "Ouvir",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (onReport != null) {
+            IconButton(onClick = onReport, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    imageVector = Icons.Default.Flag,
+                    contentDescription = "Denunciar resposta",
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

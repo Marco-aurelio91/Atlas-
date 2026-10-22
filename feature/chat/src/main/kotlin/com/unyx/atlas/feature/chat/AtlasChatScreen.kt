@@ -164,6 +164,7 @@ fun AtlasChatScreen(
                         onInputChange = { viewModel.inputText = it },
                         onSend = viewModel::sendMessage,
                         onRetry = viewModel::retryLastMessage,
+                        onReportMessage = viewModel::reportAiResponse,
                         isSending = viewModel.isSending,
                         executingTool = viewModel.executingTool,
                         streamingText = viewModel.streamingText,
